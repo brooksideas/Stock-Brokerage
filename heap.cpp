@@ -368,7 +368,7 @@ int main()
 
                 // get the profits made by calculating the buy on start date to value at End of day
                 totalProfit = totalProfit + (stockEndVector[nameOfStockIndex] - stockStartVector[nameOfStockIndex]);
-                std::cout << "Purchased stock name ->" << nameOfStock << " valued at " << stockEndVector[nameOfStockIndex] << "per share" << endl;
+                std::cout << "Purchased stock name ->" << nameOfStock << " valued at " << stockStartVector[nameOfStockIndex] << " per share" << endl;
 
                 // subtract the purchased amount from the total available funds
                 remainingBalance = remainingBalance - p.getPriority();
