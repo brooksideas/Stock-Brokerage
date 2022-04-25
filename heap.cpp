@@ -33,24 +33,7 @@ public:
     {
 
         this->size = 0;
-        this->capacity = 10;
-        // Insert the element to the priority queue
-        // insert(4);
-        // insert(2);
-        // insert(1);
-        // insert(7);
-        // insert(8);
-        // insert(9);
-        // insert(11);
-        // insert(13);
-        // insert(10);
-        // insert(21);
-        // insert(30);
-        // insert(40);
- 
-        // printHeap();
-        // getPriority();
-        // cout << "CON" << getPriority() << endl;
+        this->capacity = 10; 
     }
     // read everything from the given CSV file and parse and insert here
     priorityQ(vector<Type> value)
@@ -59,12 +42,12 @@ public:
         this->capacity = 10;
         cout << "Exchange " << endl;
 
-        // if the first value is a double then it is a exchange read
+        // Insert Start of day Exchange read
         for (double i : value)
             insert(i);
         cout << endl;
         printHeap();
-
+        cout << endl;
     }
     priorityQ(const priorityQ<Type> &copy)
     {
@@ -84,9 +67,7 @@ public:
         // Make sure there is still space in the heap
         if (this->size == this->capacity)
         {
-            // cout << "MIN HEAP FULL!" << endl;
             ensureExtraCapacity();
-            // return;
         }
 
         // Increse the amount of elements in the heap
@@ -100,7 +81,6 @@ public:
         // Moves the element up until i >= parent or root
         while (i != 0 && this->heapArray[parent(i)] > this->heapArray[i])
         {
-            cout << "HEAP VAL->" << this->heapArray[i] << "parent-> "<< this->heapArray[parent(i)] << endl; 
             swap(this->heapArray[i], this->heapArray[parent(i)]);
             i = parent(i);
         }
@@ -121,8 +101,6 @@ public:
         else if (this->size == 1)
         {
             this->size--;
-            // return this->heapArray[0];
-            // Normal extraction
         }
         else
         {
@@ -199,6 +177,7 @@ public:
     {
         return this->size;
     }
+    // For testing purpose only 
     void printHeap()
     {
         for (int i = 0; i < this->size; i++)
@@ -207,16 +186,12 @@ public:
             cout << this->heapArray[i] << "  ";
         }
         cout << endl;
-    } // test
+    } 
 private:
     int capacity;
     int size;
     double heapArray[10];
-
-    /* CREATE Empty Maps for future use */
-    // std::unordered_map<string, double> stocksMap;
-    // std::unordered_map<string, int> timesMap;
-
+ 
     /**********************************************
   Helpers to access our array easily, perform
   rudimentary operations, and manipulate capacity
@@ -261,38 +236,40 @@ private:
 int main()
 {
 
+    // Input the following from the user
     int capacity = 10;
     int numberOfDays = 10;
     double totalBalance = 500.00;
+    std::string simulateFile = "NYSE.csv";
 
-    // priorityQ<int> p(capacity);
     /* Enter the stock exchange file to initialize */
     std::ifstream stockFile("Stocks.csv");
     std::string stockLine;
     std::string oneStock;
     string stockValue;
-    vector<string> stockVector;
+    vector<string> stocksVector;
+    vector<string> stocksNameVector;
 
-    getline(stockFile, stockLine);
-
-    // std::cout << stockLine << "\n";
     std::stringstream stockStream(stockLine);
     std::string stockName;
     double stockDividened = 0.0;
+    double remainingBalance = totalBalance;
+    double totalProfit = 0.0;
     std::unordered_map<string, double> stocksMap;
     std::unordered_map<string, int> timesMap;
+    vector<double> stockStartVector;
+    vector<double> stockEndVector;
 
     std::cout << "STOCKS" << endl;
-    int isInt;
-    const type_info &isIntType = typeid(isInt);
 
     while (std::getline(stockFile, stockValue))
     {
-        stockVector.push_back(stockValue);
+        std::cout << "STOX => " << stockValue << endl;
+        stocksVector.push_back(stockValue);
     }
 
     // insert the values into the stocks unordered map
-    for (string str : stockVector)
+    for (string str : stocksVector)
     {
 
         // construct a stream from the string
@@ -301,36 +278,140 @@ int main()
         std::vector<std::string> stock(
             std::sregex_token_iterator(str.begin(), str.end(), regex, -1),
             std::sregex_token_iterator());
+        stocksNameVector.push_back(stock[0]);
         stocksMap.insert({stock[0], stod(stock[1])});
-        timesMap.insert({stock[0], 0}); // initialize
+        timesMap.insert({stock[0], 0}); // initialize the times a stock is bought to zero
     }
 
-    /* TEST:: Traversing an unordered map
+    /* TEST:: Traversing an unordered map*/
     std::cout << "STOCKS MAP******" << endl;
 
-    for (auto x : stocksMap)
-        cout << x.first << " " << x.second << endl;
-    std::cout << "STOCKS MAP******END***" << endl; */
+    for (auto x : timesMap)
+        std::cout << x.first << " " << x.second << endl;
+    std::cout << "STOCKS MAP******END***" << endl;
 
     /* Enter the exchange parsed file */
-    std::ifstream infile("NYSE.csv");
+    std::ifstream infile(simulateFile);
     std::string line;
-    std::string pol;
-    double exchangeValue;
-    vector<double> exchange;
+    std::string stockValueString;
+    double oneStockValue;
 
-    getline(infile, line);
+    int currentDay = 2; // strats from first day
 
-    // std::cout << line << "\n";
-    std::stringstream ss(line);
-
-    while (getline(ss, pol, ','))
+    /* SIMULATION */
+    // loop through the number of days to simulate until it is reached
+    // If 10 days simulated we will loop until 20 (10 * 2)
+    while (numberOfDays * 2 >= currentDay)
     {
-        exchangeValue = strtod(pol.c_str(), NULL);
-        exchange.push_back(exchangeValue);
-        std::cout << exchangeValue << "\n";
-    }
 
-    priorityQ<double> p(exchange);
+        int currentDateToFetch = currentDay; // starting from one so 2 is for one day (Start and End fetched)
+        int fetchLines = 0;
+
+        // build the start and end values of the stocks to calculate
+        while (fetchLines < currentDateToFetch && getline(infile, line))
+        {
+            std::cout << " Line " << line << "\n";
+
+            // Read as stream
+            std::stringstream fetchStartLine(line);
+            // Insert as double the last two lines on fetch i.e (start and end stock values )
+            if (fetchLines == currentDateToFetch - 2)
+            {
+                while (getline(fetchStartLine, stockValueString, ','))
+                {
+                    oneStockValue = strtod(stockValueString.c_str(), NULL);
+                    stockStartVector.push_back(oneStockValue);
+                    std::cout << "START VEC => " << oneStockValue << "\n";
+                }
+            }
+            if (fetchLines == currentDateToFetch - 1)
+            {
+                while (getline(fetchStartLine, stockValueString, ','))
+                {
+                    oneStockValue = strtod(stockValueString.c_str(), NULL);
+                    stockEndVector.push_back(oneStockValue);
+                    std::cout << "END VEC => " << oneStockValue << "\n";
+                }
+            }
+
+            fetchLines++;
+        };
+        // Seek back to the start of the file
+        infile.seekg(0);
+        // Build the Priority Queue
+        priorityQ<double> p(stockStartVector);
+
+        // calculate gains for the current day
+        while (remainingBalance > 0)
+        {
+            // Perform as long as the next stock purchase would not max out our remaining balance
+            if (remainingBalance - p.getPriority() > 0)
+            {
+                std::string nameOfStock = "";
+                // find the index of the priority in the start stock vector
+                std::vector<double>::iterator itr = std::find(stockStartVector.begin(), stockStartVector.end(), p.getPriority());
+                int nameOfStockIndex = std::distance(stockStartVector.begin(), itr);
+                std::cout << "GET NAME OF the Stock Index ->" << nameOfStockIndex << endl;
+
+                // get the name of the stock purchased using the index fetched
+                nameOfStock = stocksNameVector[nameOfStockIndex];
+
+                // add to the number of times map when a specific stock is purchased
+                try
+                {
+                    timesMap.at(nameOfStock) += 1;
+                }
+                catch (const std::exception &e)
+                {
+                    std::cerr << e.what() << '\n';
+                }
+
+                // get the profits made by calculating the buy on start date to value at End of day
+                totalProfit = totalProfit + (stockEndVector[nameOfStockIndex] - stockStartVector[nameOfStockIndex]);
+                std::cout << "Purchased stock name ->" << nameOfStock << " valued at " << stockEndVector[nameOfStockIndex] << "per share" << endl;
+
+                // subtract the purchased amount from the total available funds
+                remainingBalance = remainingBalance - p.getPriority();
+
+                // adjust priority queue
+                p.deletePriority();
+
+                std::cout << "GET remainingBalance ->" << remainingBalance << endl;
+            }
+            else
+            {
+                // calculate the total balance made include todays purchase
+                totalBalance = totalBalance + totalProfit;
+                // exit out the loop by maxing out the remaining balance
+                remainingBalance = 0;
+            }
+        }
+        // profits made today
+        std::cout << "Profit made today ->" << totalProfit << endl;
+
+        // total balance currently
+        std::cout << "Day " << ((currentDay + 2) / 2) << " Current balance -> " << totalBalance << endl;
+
+        // Set the remaining balance to the total balance to continue trading in the stock market
+        remainingBalance = totalBalance;
+
+        // Reset the start and end vectors and total profit of the day by the end of day
+        stockStartVector.clear();
+        stockEndVector.clear();
+        totalProfit = 0.0;
+
+        // increase by two to go to the next date to be fetched
+        currentDay = currentDay + 2;
+    }
+    std::cout << "**********Simulation End******" << endl;
+
+    for (int i = 0; i < 25; i++)
+    {
+        // get the dividened per stock from stockMap and the multiply it with the number of times stock was purchased
+        double oneStockDividened = stocksMap.at(stocksNameVector[i]) * timesMap.at(stocksNameVector[i]);
+        stockDividened = stockDividened + oneStockDividened;
+    }
+    std::cout << "Balance after 10 days $ " << totalBalance << endl;
+    std::cout << "Amount in dividends " << stockDividened << endl;
     return 0;
 }
